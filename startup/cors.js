@@ -1,3 +1,5 @@
+const cors = require("cors");
+
 // enabling cors protection
 const corsOptions = {
     origin: ['http://localhost:3000'],
