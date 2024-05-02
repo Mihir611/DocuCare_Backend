@@ -1,6 +1,7 @@
 const express = require('express');
 const startDB = require("./startup/db");
 const startCors = require("./startup/cors");
+const xssProtecion = require("./startup/helmet");
 const appRouter = require("./startup/routes");
 const rateLimit = require('express-rate-limit');
 const bunyan = require('bunyan');
@@ -14,6 +15,7 @@ const app = express();
 app.use(express.json());
 
 startCors(app);
+xssProtecion(app);
 
 // configuring the rate limiter
 const limiter = rateLimit({
@@ -24,7 +26,9 @@ app.use(limiter);
 
 
 startDB();
+
 appRouter(app);
+
 app.use((req, res, next) => {
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
