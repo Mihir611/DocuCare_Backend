@@ -1,10 +1,10 @@
-require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const userRouter = require('./routes/userRoutes');
-const cors = require('cors');
+const startDB = require("./startup/db");
+const startCors = require("./startup/cors");
+const appRouter = require("./startup/routes");
 const rateLimit = require('express-rate-limit');
 const bunyan = require('bunyan');
+const env = require("./env")
 
 const logger = bunyan.createLogger({
     name: 'docucare.backend.log',
@@ -13,12 +13,7 @@ const logger = bunyan.createLogger({
 const app = express();
 app.use(express.json());
 
-// enabling cors protection
-const corsOptions = {
-    origin: ['http://localhost:3000'],
-    credentials: true,
-};
-app.use(cors(corsOptions));
+startCors(app);
 
 // configuring the rate limiter
 const limiter = rateLimit({
@@ -27,15 +22,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-mongoose.connect(`${process.env.MONGO_URI}/${process.env.MONGO_DB_NAME}`, {
-}).then(() => {
-    console.log('Connected to DB');
-    logger.info('Connected to DB');
-}).catch((err) => {
-    console.error('Error connecting to MongoDB:', err);
-    logger.error('Error connecting to MongoDB:', err);
-});
 
+startDB();
+appRouter(app);
 app.use((req, res, next) => {
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -46,8 +35,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/api/users', userRouter);
-const PORT = process.env.PORT || 3000;
+
+const PORT = env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     logger.info(`Server running on port ${PORT}`)
