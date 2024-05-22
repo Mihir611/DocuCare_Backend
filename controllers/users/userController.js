@@ -3,9 +3,9 @@ const jwt = require("jsonwebtoken");
 const User = require("../../models/userModel");
 const env = require("../../env");
 
-exports.registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
-    const { username, phoneNumber, email, password } = req.body;
+    const { username, phoneNumber, email, password, dob, name } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User email already exists" });
@@ -18,6 +18,8 @@ exports.registerUser = async (req, res) => {
         phoneNumber,
         email,
         password: hashedPassword,
+        dob: new Date(dob),
+        name,
       });
       await newUser.save();
 
@@ -29,7 +31,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-exports.loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -57,6 +59,67 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.protectedRoute = (req, res) => {
+const protectedRoute = (req, res) => {
   res.json({ message: "This is a protected route" });
+};
+
+const readUser = async (req, res) => {
+  const email = req.query.email;
+  const user = await User.findOne({ email: email });
+  res.status(200).send({
+    message: "Success",
+    data: user,
+  });
+};
+
+const editUser = async (req, res) => {
+  const { phoneNumber, name, email, dob } = req.body;
+  const updateObject = {
+    name,
+    phoneNumber,
+    dob: new Date(dob),
+  };
+  const filteredUpdate = Object.fromEntries(
+    Object.entries(updateObject).filter(
+      ([key, value]) => value !== null && value !== undefined
+    )
+  );
+  const updatedUser = await User.updateOne(
+    { email },
+    {
+      $set: filteredUpdate,
+    }
+  );
+  if (updatedUser.modifiedCount) {
+    res.status(200).send({
+      message: "User details updated successfully",
+    });
+  } else {
+    res.status(200).send({
+      message: "Nothing to update",
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  const { email } = req.body;
+  const deleted = await User.deleteOne({ email: email });
+  if(deleted.deletedCount) {
+    res.status(200).send({
+      message: "User deleted successfully"
+    })
+  } else {
+    res.status(200).send({
+      message: "Nothing to delete"
+    })
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  protectedRoute,
+  editUser,
+  readUser,
+  deleteUser
 };

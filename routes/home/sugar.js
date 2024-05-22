@@ -6,7 +6,7 @@ const {
 } = require("../../controllers/home/sugar");
 const { authenticateToken } = require("../../middleware/authMiddleware");
 
-router.post("/addHeartRate", authenticateToken, addSugar);
-router.get("/heartRateReports", authenticateToken, sugarReports);
+router.post("/addSugar", authenticateToken, addSugar);
+router.get("/sugarReports", authenticateToken, sugarReports);
 
 module.exports = router;
